@@ -10,7 +10,8 @@ class Body(object):
 
     self._transform = None
     self._globalTransform = None
-    self._dirty = True
+    self._dirtyLocal = True
+    self._dirtyGlobal = True
 
     self._pre = previousBody
     self._post = []
@@ -27,15 +28,25 @@ class Body(object):
   @q.setter
   def q(self, val):
     self._q = val
-    self._dirty = True
+    self._dirty()
 
   @property
   def x(self):
     return self._x
 
+  @x.setter
+  def x(self, x):
+    self._x = x
+    self._dirty()
+
   @property
   def y(self):
     return self._y
+
+  @y.setter
+  def y(self, y):
+    self._y = y
+    self._dirty()
 
   @property
   def pre(self):
@@ -46,12 +57,24 @@ class Body(object):
     return self._post
 
   def globalTransform(self):
-    if self._dirty:
+    if self._dirtyLocal:
       self._transform = Transform2D(0, 0, self._q) * Transform2D(self._x, self._y, 0)
+      self._dirtyLocal = False
+    if self._dirtyGlobal:
       if self.isRoot():
         self._globalTransform = self._transform
       else:
         self._globalTransform = self._pre.globalTransform() * self._transform
-      self._dirty = False
+      self._dirtyGlobal = False
     return self._globalTransform
+
+  def isDirty(self):
+    return self._dirtyGlobal or self.dirtyLocal
+
+  def _dirty(self):
+    self._dirtyGlobal = True
+    self._dirtyLocal = True
+    for b in self._post:
+      if b.isDirty():
+        b.dirty()
 
