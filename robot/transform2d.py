@@ -33,7 +33,7 @@ class Transform2D(np.matrix):
     return self[1,2]
 
   @staticmethod
-  def derivate(self, theta):
+  def derivate(theta):
     ct = math.cos(theta)
     st = math.sin(theta)
     mat = np.matrix([[-st, -ct, 0.],

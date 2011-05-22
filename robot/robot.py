@@ -20,9 +20,9 @@ class Robot(object):
   def _getLines(self, body):
     lines = []
     if body:
-      bt = body.globalTransform()
+      bt = body.globalTransform
       for b in body.post:
-        bbt = b.globalTransform()
+        bbt = b.globalTransform
         lines += [[bt.x, bbt.x], [bt.y, bbt.y]]
         lines += self._getLines(b)
     return lines
