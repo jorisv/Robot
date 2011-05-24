@@ -100,6 +100,7 @@ class Body(object):
       curD = curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
              revGlobalTrans
       self._jacob[:,0] = [[curD.x],[curD.y]]
+      self._dirtyJacob = False
 
     return self._jacob
 

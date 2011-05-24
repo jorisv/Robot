@@ -38,6 +38,9 @@ if __name__ == '__main__':
   print l
 
   print b3.jacobian
+  b1.q = 0.1
+  b1.q = 0.
+  print b3.jacobian
 
   plt.plot(*l)
   plt.show()
