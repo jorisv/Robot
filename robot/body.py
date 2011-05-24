@@ -22,6 +22,9 @@ class Body(object):
       self._pre._post.append(self)
       self._rootPath = self._pre._rootPath + [self]
 
+    self._jacob = numpy.matlib.zeros((2, len(self._rootPath)))
+    self._dirtyJacob = True
+
   def isRoot(self):
     return self._pre is None
 
@@ -30,9 +33,10 @@ class Body(object):
     return self._q
 
   @q.setter
-  def q(self, val):
-    self._q = val
-    self._dirty()
+  def q(self, q):
+    if q != self._q:
+      self._q = q
+      self._dirtyAll()
 
   @property
   def x(self):
@@ -40,8 +44,9 @@ class Body(object):
 
   @x.setter
   def x(self, x):
-    self._x = x
-    self._dirty()
+    if x != self._x:
+      self._x = x
+      self._dirtyAll()
 
   @property
   def y(self):
@@ -49,8 +54,9 @@ class Body(object):
 
   @y.setter
   def y(self, y):
-    self._y = y
-    self._dirty()
+    if y != self._y:
+      self._y = y
+      self._dirtyAll()
 
   @property
   def pre(self):
@@ -77,31 +83,33 @@ class Body(object):
       self._dirtyLocal = False
     return self._transform
 
+  @property
   def jacobian(self):
-    nbQ = len(self._rootPath)
-    jacob = numpy.matlib.zeros((2, nbQ))
-    revGlobalTrans = Transform2D()
-    for i in range(nbQ - 1, 0, -1):
-      curQ = self._rootPath[i]
-      curD = curQ.pre.globalTransform *\
-             Transform2D.derivate(curQ.q) * Transform2D(curQ.x, curQ.y, 0.) *\
-             revGlobalTrans
-      jacob[:,i] = [[curD.x],[curD.y]]
-      revGlobalTrans = curQ.transform * revGlobalTrans
+    if self._dirtyJacob:
+      nbQ = len(self._rootPath)
+      revGlobalTrans = Transform2D()
+      for i in range(nbQ - 1, 0, -1):
+        curQ = self._rootPath[i]
+        curD = curQ.pre.globalTransform *\
+               Transform2D.derivate(curQ.q) * Transform2D(curQ.x, curQ.y, 0.) *\
+               revGlobalTrans
+        self._jacob[:,i] = [[curD.x],[curD.y]]
+        revGlobalTrans = curQ.transform * revGlobalTrans
 
-    curQ = self._rootPath[0]
-    curD = Transform2D.derivate(curQ.q) * Transform2D(curQ.x, curQ.y, 0.) * revGlobalTrans
-    jacob[:,0] = [[curD.x],[curD.y]]
+      curQ = self._rootPath[0]
+      curD = Transform2D.derivate(curQ.q) * Transform2D(curQ.x, curQ.y, 0.) * revGlobalTrans
+      self._jacob[:,0] = [[curD.x],[curD.y]]
 
-    return jacob
+    return self._jacob
 
   def isDirty(self):
-    return self._dirtyGlobal or self._dirtyLocal
+    return self._dirtyGlobal or self._dirtyLocal or self._dirtyJacob
 
-  def _dirty(self):
+  def _dirtyAll(self):
     self._dirtyGlobal = True
     self._dirtyLocal = True
+    self._dirtyJacob = True
     for b in self._post:
-      if not b._dirtyGlobal or not b._dirtyLocal:
-        b._dirty()
+      if not b._dirtyGlobal or not b._dirtyLocal or not b._dirtyJacob:
+        b._dirtyAll()
 

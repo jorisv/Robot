@@ -37,7 +37,7 @@ if __name__ == '__main__':
   l = r.getLines()
   print l
 
-  print b3.jacobian()
+  print b3.jacobian
 
   plt.plot(*l)
   plt.show()
