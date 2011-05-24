@@ -91,13 +91,14 @@ class Body(object):
       for i in range(nbQ - 1, 0, -1):
         curQ = self._rootPath[i]
         curD = curQ.pre.globalTransform *\
-               Transform2D.derivate(curQ.q) * Transform2D(curQ.x, curQ.y, 0.) *\
+               curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
                revGlobalTrans
         self._jacob[:,i] = [[curD.x],[curD.y]]
         revGlobalTrans = curQ.transform * revGlobalTrans
 
       curQ = self._rootPath[0]
-      curD = Transform2D.derivate(curQ.q) * Transform2D(curQ.x, curQ.y, 0.) * revGlobalTrans
+      curD = curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
+             revGlobalTrans
       self._jacob[:,0] = [[curD.x],[curD.y]]
 
     return self._jacob

@@ -21,7 +21,7 @@ class Transform2D(np.matrix):
     else:
       raise TypeError("Bad arguments")
 
-    mat.__class__ = Transform2D
+    mat.__class__ = cls
     return mat
 
   @property
@@ -31,6 +31,11 @@ class Transform2D(np.matrix):
   @property
   def y(self):
     return self[1,2]
+
+  def thetaDerivated(self):
+    return Transform2D(np.mat([[self[0,1], -self[0,0], 0.],
+                               [self[0,0], self[0,1], 0.],
+                               [0., 0., 0.]]))
 
   @staticmethod
   def derivate(theta):
