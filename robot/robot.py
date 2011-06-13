@@ -1,21 +1,27 @@
-#math
-import numpy as np
-
-#robot
-from body import Body
-from transform2d import Transform2D
-
 
 class Robot(object):
   def __init__(self):
     self._bodies = []
     self._root = None
 
-  def setBodies(self, bodies):
-    self._bodies = bodies
+  def setRoot(self, root):
+    self._root = root
+    self._bodies = [root] + root.children()
+    for i, b in enumerate(self._bodies):
+      b.id = i
+
+  def bodieCount(self):
+    return len(self._bodies)
 
   def getLines(self):
     return self._getLines(self._root)
+
+  def configure(self, x):
+    for b, q in zip(self._bodies, x):
+      b.q = q
+
+  def configuration(self):
+    return [b.q for b in self._bodies]
 
   def _getLines(self, body):
     lines = []

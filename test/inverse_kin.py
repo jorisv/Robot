@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 
 # robot
 from robot import Robot, Body
+from robot import Line
+from robot import ContactConstraint
+from robot import InverseKinematics
 
 
 if __name__ == '__main__':
@@ -34,15 +37,18 @@ if __name__ == '__main__':
   r = Robot()
   r.setRoot(b1)
 
-  l = r.getLines()
-  c1 = ContactConstraint(b3, line, 0.5)
-  print l
+  line1 = Line(0.0, -1.5, 1.5, -1)
+  line2 = Line(-1.0, -1.5, -0.1, -1)
 
-  print b3.jacobian
-  b1.q = 0.1
-  b1.q = 0.
-  print b3.jacobian
+  c1 = ContactConstraint(b3, line1, 0.5)
+  c2 = ContactConstraint(b5, line2, 0.5)
 
+  ik = InverseKinematics(r)
+  ik.addConstraint(c1)
+  ik.addConstraint(c2)
+  ik.solve()
+
+  l = r.getLines() + line1.getLines() + line2.getLines()
   plt.plot(*l)
   plt.show()
 

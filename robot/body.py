@@ -10,6 +10,8 @@ class Body(object):
     self._y = y
     self._q = q
 
+    self.id = None
+
     self._transform = None
     self._globalTransform = None
     self._dirtyLocal = True
@@ -27,6 +29,16 @@ class Body(object):
 
   def isRoot(self):
     return self._pre is None
+
+  def children(self):
+    child = self._post[:]
+    for b in self._post:
+      child += b.children()
+    return child
+
+  @property
+  def rootPath(self):
+    return self._rootPath
 
   @property
   def q(self):
