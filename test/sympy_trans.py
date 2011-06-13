@@ -45,6 +45,9 @@ if __name__ == '__main__':
 
   m = m0 * m1 * m2
 
+  print m0
+  print
+
   print m
   print
 
@@ -58,6 +61,14 @@ if __name__ == '__main__':
 
   print m.diff(q2)[2]
   print m.diff(q2)[5]
+  print
+
+  print m.diff(x0)[2]
+  print m.diff(x0)[5]
+  print
+
+  print m.diff(y0)[2]
+  print m.diff(y0)[5]
   print
 
   print eval(m.diff(q0)[2], x, y, q, xv, yv, qv)

@@ -1,11 +1,15 @@
 #math
+import math
 import numpy.matlib
 
 #robot
 from transform2d import Transform2D
 
 class Body(object):
-  def __init__(self, x, y, q, previousBody=None):
+  def __init__(self, name, x, y, q, previousBody=None, fixed=False):
+    self.name = name
+
+    self._fixed = fixed
     self._x = x
     self._y = y
     self._q = q
@@ -20,12 +24,25 @@ class Body(object):
     self._pre = previousBody
     self._post = []
     self._rootPath = [self]
+
     if self._pre is not None:
       self._pre._post.append(self)
       self._rootPath = self._pre._rootPath + [self]
 
-    self._jacob = numpy.matlib.zeros((2, len(self._rootPath)))
+    nbJacobC = 0
+    for b in self._rootPath:
+      if not b.fixed:
+        nbJacobC += 1
+
+    # if the root is fixed we don't add x and y
+    xyC = 0
+    if not self._rootPath[0].fixed:
+      xyC = 2
+
+    self._jacob = numpy.matlib.zeros((2, nbJacobC + xyC))
     self._dirtyJacob = True
+
+    self._nbMobileRoot = nbJacobC
 
   def isRoot(self):
     return self._pre is None
@@ -35,6 +52,13 @@ class Body(object):
     for b in self._post:
       child += b.children()
     return child
+
+  def mobileRootCount(self):
+    return self._nbMobileRoot
+
+  @property
+  def fixed(self):
+    return self._fixed
 
   @property
   def rootPath(self):
@@ -100,19 +124,28 @@ class Body(object):
     if self._dirtyJacob:
       nbQ = len(self._rootPath)
       revGlobalTrans = Transform2D()
+
+      curJac = self._jacob.shape[1] - 1
       for i in range(nbQ - 1, 0, -1):
         curQ = self._rootPath[i]
-        curD = curQ.pre.globalTransform *\
-               curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
-               revGlobalTrans
-        self._jacob[:,i] = [[curD.x],[curD.y]]
+        if not curQ.fixed:
+          curD = curQ.pre.globalTransform *\
+                 curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
+                 revGlobalTrans
+          self._jacob[:,curJac] = [[curD.x],[curD.y]]
+          curJac -= 1
         revGlobalTrans = curQ.transform * revGlobalTrans
 
       curQ = self._rootPath[0]
-      curD = curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
-             revGlobalTrans
-      self._jacob[:,0] = [[curD.x],[curD.y]]
-      self._dirtyJacob = False
+      if not curQ.fixed:
+        ct = math.cos(curQ.q)
+        st = math.sin(curQ.q)
+        curD = curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
+               revGlobalTrans
+        self._jacob[:,0] = [[ct],[st]]
+        self._jacob[:,1] = [[-st],[ct]]
+        self._jacob[:,2] = [[curD.x],[curD.y]]
+        self._dirtyJacob = False
 
     return self._jacob
 

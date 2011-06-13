@@ -15,7 +15,9 @@ class InverseKinematics(object):
     self._constraint.append(constraint)
 
   def solve(self):
-    nbVar = self._robot.bodieCount()
+    x0 = self._robot.configuration()
+    nbVar = len(x0)
+
     xL = [-math.pi] * nbVar
     xU = [math.pi] * nbVar
     cL = []
@@ -67,6 +69,6 @@ class InverseKinematics(object):
                          nCon, np.array(cL), np.array(cU),
                          nnzJ, nnzH, evalF, evalFJ, evalC, evalCJ)
 
-    x, zl, zu, obj, status = opt.solve(np.array(self._robot.configuration()))
+    x, zl, zu, obj, status = opt.solve(np.array(x0))
     opt.close()
 
