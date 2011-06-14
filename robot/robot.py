@@ -1,20 +1,21 @@
 
 class Robot(object):
   def __init__(self):
-    self._bodies = []
+    self._bodies = {}
     self._mobileBodies = []
     self._nbMobileBodies = 0
     self._root = None
 
   def setRoot(self, root):
     self._root = root
-    self._bodies = [root] + root.children()
+    bodyList = [root] + root.children()
     self._mobileBodies = []
     self._nbMobileBodies = 0
 
     i = 0 if self._root.fixed else 2
 
-    for b in self._bodies:
+    for b in bodyList:
+      self._bodies[b.name] = b
       if not b.fixed:
         b.id = i
         self._mobileBodies.append(b)
@@ -45,6 +46,14 @@ class Robot(object):
     xyC = [] if self._root.fixed else [self._root.x, self._root.y]
 
     return xyC + [b.q for b in self._mobileBodies]
+
+  def body(self, name):
+    return self._bodies[name]
+
+  def reset(self):
+    x = self.configuration()
+    x = [0.] * len(x)
+    self.configure(x)
 
   def _getLines(self, body):
     lines = []
