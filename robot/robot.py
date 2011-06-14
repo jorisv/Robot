@@ -11,9 +11,8 @@ class Robot(object):
     self._bodies = [root] + root.children()
     self._mobileBodies = []
     self._nbMobileBodies = 0
-    i = 0
-    if not self._root.fixed:
-      i = 2
+
+    i = 0 if self._root.fixed else 2
 
     for b in self._bodies:
       if not b.fixed:
@@ -26,26 +25,24 @@ class Robot(object):
   def bodieCount(self):
     return len(self._bodies)
 
-  def mobilebodieCount(self):
+  def mobileBodieCount(self):
     return self._nbMobileBodies
 
   def getLines(self):
     return self._getLines(self._root)
 
   def configure(self, x):
-    deb = 0
+    beg = 0
     if not self._root.fixed:
       self._root.x = x[0]
       self._root.y = x[1]
-      deb = 2
+      beg = 2
 
-    for b, q in zip(self._mobileBodies, x[deb:]):
+    for b, q in zip(self._mobileBodies, x[beg:]):
       b.q = q
 
   def configuration(self):
-    xyC = []
-    if not self._root.fixed:
-      xyC = [self._root.x, self._root.y]
+    xyC = [] if self._root.fixed else [self._root.x, self._root.y]
 
     return xyC + [b.q for b in self._mobileBodies]
 

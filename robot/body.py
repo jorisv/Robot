@@ -17,35 +17,31 @@ class Body(object):
     self.id = None
 
     self._transform = None
-    self._globalTransform = None
     self._dirtyLocal = True
+    self._globalTransform = None
     self._dirtyGlobal = True
 
     self._pre = previousBody
     self._post = []
     self._rootPath = [self]
+    self._mobileRootPath = [] if fixed else [self]
+    self._nbMobile = 0 if fixed else 3
 
     if self._pre is not None:
       self._pre._post.append(self)
       self._rootPath = self._pre._rootPath + [self]
+      self._mobileRootPath = self._pre._mobileRootPath + [self]
+      self._nbMobile = (0 if fixed else 1) + self._pre._nbMobile
 
-    nbJacobC = 0
-    for b in self._rootPath:
-      if not b.fixed:
-        nbJacobC += 1
-
-    # if the root is fixed we don't add x and y
-    xyC = 0
-    if not self._rootPath[0].fixed:
-      xyC = 2
-
-    self._jacob = numpy.matlib.zeros((2, nbJacobC + xyC))
+    self._jacob = numpy.matlib.zeros((2, self._nbMobile))
     self._dirtyJacob = True
 
-    self._nbMobileRoot = nbJacobC
 
   def isRoot(self):
     return self._pre is None
+
+  def hasFixedRoot(self):
+    return self._rootPath[0].fixed
 
   def children(self):
     child = self._post[:]
@@ -53,8 +49,8 @@ class Body(object):
       child += b.children()
     return child
 
-  def mobileRootCount(self):
-    return self._nbMobileRoot
+  def varsCount(self):
+    return self._nbMobile
 
   @property
   def fixed(self):
@@ -63,6 +59,10 @@ class Body(object):
   @property
   def rootPath(self):
     return self._rootPath
+
+  @property
+  def mobileRootPath(self):
+    return self._mobileRootPath
 
   @property
   def q(self):
@@ -122,11 +122,11 @@ class Body(object):
   @property
   def jacobian(self):
     if self._dirtyJacob:
-      nbQ = len(self._rootPath)
+      nbBody = len(self._rootPath)
       revGlobalTrans = Transform2D()
 
-      curJac = self._jacob.shape[1] - 1
-      for i in range(nbQ - 1, 0, -1):
+      curJac = self._nbMobile - 1
+      for i in range(nbBody - 1, 0, -1):
         curQ = self._rootPath[i]
         if not curQ.fixed:
           curD = curQ.pre.globalTransform *\
@@ -142,10 +142,11 @@ class Body(object):
         st = math.sin(curQ.q)
         curD = curQ.transform.thetaDerivated() * Transform2D(curQ.x, curQ.y, 0.) *\
                revGlobalTrans
-        self._jacob[:,0] = [[ct],[st]]
-        self._jacob[:,1] = [[-st],[ct]]
-        self._jacob[:,2] = [[curD.x],[curD.y]]
-        self._dirtyJacob = False
+        self._jacob[:,0] = [[ct],[st]] # dx
+        self._jacob[:,1] = [[-st],[ct]] # dy
+        self._jacob[:,2] = [[curD.x],[curD.y]] # dq
+
+      self._dirtyJacob = False
 
     return self._jacob
 
